@@ -1,0 +1,221 @@
+#include "stdafx.h"
+#include<iostream>
+#include<fstream>
+#include<stdio.h>
+#include<algorithm>
+#include<cmath>
+#include<math.h>
+#include<cstring>
+#include<string>
+#include<vector>
+#include<list>
+#include<set>
+#include<map>
+#include<stack>
+#include<queue>
+#include<deque>
+
+#define pb push_back
+#define mp make_pair
+#define forn(i,n) for(int i=0;i<(n);i++)
+
+using namespace std;
+
+const int INF = (int)1e9 + 7;
+
+typedef pair<int, int> pi;
+typedef vector< vector<pi> > graph;
+typedef vector<int> vi;
+typedef vector<vi> vvi;
+
+// Объявляем абстрактный класс
+
+class IStruct {
+	
+public:
+	virtual void minextract() = 0;
+	virtual void push(pi value) = 0;
+	virtual pi minget() = 0;
+	virtual bool empty() = 0;
+	virtual void extract(pi value) = 0;
+};
+
+
+//Класс, наследуемый от Istruct и реализующий его методы через функции set'а
+
+class ISet:public IStruct {
+private:
+	set<pi> data;
+public:
+	void minextract()
+	{
+		data.erase(data.begin());
+	}
+	void push(pi value)
+	{
+		data.insert(value);
+	}
+	pi minget()
+	{
+		return *data.begin();
+	}
+	bool empty()
+	{
+		return data.empty();
+	}
+	void extract(pi value)
+	{
+		data.erase(value);
+	}
+	ISet() {}
+
+};
+
+// Djkstra Algorithm
+void Djkstra(ISet * s, const graph & g, vi & d, int zero_vertux)
+{
+	int n = (int)g.size();
+	d.assign(n, INF);
+
+	d[zero_vertux] = 0;
+	forn(i, n) s->push(mp(d[i], i));
+
+	while (!s->empty())
+	{
+		pi p = s->minget();
+		s->minextract();
+		int vertux = p.second;
+
+		forn(i, (int)g[vertux].size())
+		{
+			int to = g[vertux][i].first, dist = g[vertux][i].second;
+			if (d[to] > d[vertux] + dist)
+			{
+				s->extract(mp(d[to], to));
+				d[to] = d[vertux] + dist;
+				s->push(mp(d[to], to));
+			}
+		}
+	}
+}
+
+void Floyd(const graph & g, vi & d, int zero_vertux)
+{
+	int n = (int)g.size();
+	vvi floyd(n, vi(n, INF));
+	forn(i, n) floyd[i][i] = 0;
+	forn(i, n) forn(j, (int)g[i].size())
+	{
+		int from = i, to = g[i][j].first, dist = g[i][j].second;
+		floyd[to][from] = min(dist, floyd[to][from]);
+		floyd[from][to] = min(dist, floyd[from][to]);
+	}
+
+	forn(k, n) forn(i, n) forn(j, n)
+		if (floyd[i][k] < INF && floyd[k][j] < INF)
+		{
+			floyd[i][j] = min(floyd[i][j], floyd[i][k] + floyd[k][j]);
+		}
+	d.resize(n);
+	forn(i, n) d[i] = floyd[zero_vertux][i];
+}
+
+int number_of_vertux_in_graph()
+{
+	return ((int)abs(rand())) % 10 + 10;
+}
+
+int random_vertux_in_graph(int n)
+{
+	return ((int)abs(rand())) % n;
+}
+
+int random_weight_of_edge()
+{
+	int MAX_WEIGHT_OF_EDGE = 100;
+	return ((int)abs(rand())) % MAX_WEIGHT_OF_EDGE + 1;
+}
+
+void make_graph(graph & g, int & zero_vertux)
+{
+	int n = number_of_vertux_in_graph();
+	zero_vertux = random_vertux_in_graph(n);
+	g.resize(n);
+	int edge_number = (n*(n - 1)) / 2;
+	forn(i, edge_number)
+	{
+		int a, b, w;
+		do {
+			a = random_vertux_in_graph(n);
+			b = random_vertux_in_graph(n);
+		} while (a == b);
+
+		w = random_weight_of_edge();
+		g[a].pb(mp(b, w));
+		g[b].pb(mp(a, w));
+	}
+}
+
+bool equal_errays(const vi & a, const vi & b)
+{
+	if ((int)a.size() != (int)b.size()) return false;
+	forn(i, (int)a.size()) if (a[i] != b[i]) return false;
+	return true;
+}
+
+bool TESTING()
+{
+	cout << "*********START OF TESTING*********\n\n";
+
+	int NUMBER_OF_TESTS = 100;
+	forn(i, NUMBER_OF_TESTS)
+	{
+		cout << "TEST # " << i + 1 << "\n\n";
+		cout << "STAGE 1. MAKING GRAPH.\n";
+
+		graph g;
+		int zero_vertux;
+		make_graph(g, zero_vertux);
+		cout << "RESULT: GRAPH MADE\n\n" << "STAGE 2. PRINT GTAPH.\n" << "RESULT:***\n";
+		cout << "Number_Of_Vertux: " << (int)g.size() << "\n";
+		cout << "Zero_Vertux: " << zero_vertux + 1 << "\n";
+		cout << "List Of Edges(from to weight):\n";
+		forn(i, (int)g.size()) forn(j, (int)g[i].size()) cout << i + 1 << " " << g[i][j].first + 1 << " " << g[i][j].second << "\n";
+		cout << "\n\n";
+		vi d1, d2;
+		ISet * iset1 = new ISet;
+		Djkstra(iset1, g, d1, zero_vertux);
+		cout << "STAGE 2. DJKSTRA ALGORITHM GIVES RESULT:\n";
+		forn(i, (int)d1.size()) cout << d1[i] << " ";
+		cout << "\n\n";
+		Floyd(g, d2, zero_vertux);
+		cout << "STAGE 3. FLOYD ALGORITHM GIVES RESULT:\n";
+		forn(i, (int)d2.size()) cout << d2[i] << " ";
+		cout << "\n\n";
+
+		cout << "STAGE 4. GENERAL RESULT:\n";
+		if (equal_errays(d1, d2)) cout << "YES\n\n";
+		else
+		{
+			cout << "NO\n\n";
+			cout << "TESTING COMPLETE. THERE ARE SOME MISTAKES IN FLOYD ALGORIHTM IMPLEMENTATION";
+			return false;
+		}
+
+	}
+
+	cout << "TESTING COMPLETE. FLOYD ALGORITHM IMPLEMENTATION IS WELL\n\n\n\n\n";
+	return true;
+}
+
+int main()
+{
+	//freopen("input.txt","r",stdin);
+	//freopen("output.txt", "w", stdout);
+
+	int NUMBER_OF_GENERAL_TESTS = 10;
+
+	forn(i,NUMBER_OF_GENERAL_TESTS) if (!TESTING()) { cout << "MISTAKE ON GENERAL TEST " << i + 1 << "\n"; return 0; }
+
+	forn(i, 10) cout << "ALL " << NUMBER_OF_GENERAL_TESTS << " GENERAL TESTS FINE\n";
+}
