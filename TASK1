@@ -1,0 +1,68 @@
+#include "stdafx.h"
+#include<iostream>
+#include<fstream>
+#include<stdio.h>
+#include<algorithm>
+#include<cmath>
+#include<math.h>
+#include<cstring>
+#include<string>
+#include<vector>
+#include<list>
+#include<set>
+#include<map>
+#include<stack>
+#include<queue>
+#include<deque>
+
+#define pb push_back
+#define mp make_pair
+#define forn(i,n) for(int i=0;i<(n);i++)
+
+using namespace std;
+
+typedef long long ll;
+
+bool work(vector<ll> & v, ll n, int & SZ)
+{
+	int sz = 0, N = (int)v.size();
+	for (int i = N - SZ;i<N;i++)
+	{
+		ll x = v[i] % 10, a;
+		if (x == 4)
+		{
+			a = v[i] * 10 + 4;
+			if (a < n) { v.pb(a);sz++; }
+			a = v[i] * 10 + 7;
+			if (a < n) { v.pb(a);sz++; }
+		}
+		else
+		{
+			a = v[i] * 10 + 4;
+			if (a < n) { v.pb(a);sz++; }
+		}
+	}
+	SZ = sz;
+	return sz > 0;
+}
+
+vector<ll> ANSWER(ll n)
+{
+	vector<ll> ans;
+	if (4 < n) ans.pb(4);
+	if (7 < n) ans.pb(7);
+	int SZ = 2;
+	while (work(ans, n, SZ));
+	return ans;
+}
+int main()
+{
+	//freopen("input.txt","r",stdin);
+	//freopen("output.txt","w",stdout);
+
+
+	ll n;
+	cin >> n;
+	vector<ll> v = ANSWER(n);
+	forn(i, (int)v.size()) cout << v[i] << endl;
+}
