@@ -1,0 +1,209 @@
+#include "stdafx.h"
+#include<iostream>
+#include<fstream>
+#include<stdio.h>
+#include<algorithm>
+#include<cmath>
+#include<math.h>
+#include<cstring>
+#include<string>
+#include<vector>
+#include<list>
+#include<set>
+#include<map>
+#include<stack>
+#include<queue>
+#include<deque>
+
+#define pb push_back
+#define mp make_pair
+#define forn(i,n) for(int i=0;i<(n);i++)
+
+using namespace std;
+
+const int INF = 1e9 + 7;
+const double eps = 1e-9;
+typedef pair<int, int> pii;
+typedef pair<int, pii> pii2;
+typedef vector<int> vi;
+typedef vector<vi> vvi;
+typedef vector<double> vd;
+typedef vector<vd> vvd;
+typedef vector<bool> vb;
+typedef vector< vector<pii> > vvpi;
+
+int weight()
+{
+	int MAX_WEIGHT = 100;
+	return ((int)(abs(rand()))) % MAX_WEIGHT + 1;
+}
+
+void dfs(vvpi & g, vb & used, int n, int m, int v)
+{
+	m = 0;
+	forn(i, n) if (!used[i]) m++;
+	if (!m) return;
+
+	int k = max((((int)(abs(rand()))) % m) / 3, 1);
+
+	vector<int> q(n);
+	forn(i, n) q[i] = i;
+	random_shuffle(q.begin(), q.end());
+	int cur = 0;
+	while (k > 0 && cur < n)
+	{
+		int to = q[cur];
+		if (used[to])
+		{
+			cur++;
+			continue;
+		}
+		else {
+			k--;
+			cur++;
+			used[to] = true;
+			g[v].pb(mp(to,weight()));
+			m--;
+		}
+	}
+	forn(i, (int)g[v].size())
+	{
+		int to = g[v][i].first;
+		dfs(g, used, n, m, to);
+	}
+}
+
+void make_random_tree(int & n, vvpi & graph)
+{
+	int MAXN = 100;
+	n = ( (int)(abs(rand())) ) % MAXN + MAXN;
+
+	vector<bool> used(n, false);
+	int v0 = ((int)(abs(rand()))) % n;
+	graph.resize(n);
+	used[v0] = true;
+
+	dfs(graph, used, n, n-1, v0);
+
+	vvpi g(n);
+	forn(i, n) forn(j, (int)graph[i].size()) g[graph[i][j].first].pb(mp(i, graph[i][j].second));
+
+	forn(i, n) forn(j, (int)g[i].size()) graph[i].pb(g[i][j]);
+}
+
+void floyd(const vvpi & g, vvi & d)
+{
+	int n = (int)g.size();
+	d.assign(n, vi(n, INF));
+	forn(i, n) forn(j, (int)g[i].size())
+	{
+		int a = i, b = g[i][j].first, w = g[i][j].second;
+		d[a][b] = min(d[a][b], w);
+		d[b][a] = min(d[b][a], w);
+	}
+	forn(i, n) d[i][i] = 0;
+
+	forn(k, n) forn(i, n) forn(j, n)
+		if (d[i][k] < INF && d[k][j] < INF)
+			d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
+}
+
+bool cmp1(pii2 a, pii2 b)
+{
+	return a.first < b.first;
+}
+
+int dsu_get(vi & p, int v)
+{
+	return (p[v] == v) ? v : ( p[v] = dsu_get(p, p[v]) ) ;
+}
+
+void dsu_unite(vi & p, int a, int b)
+{
+	a = dsu_get(p, a);
+	b = dsu_get(p, b);
+	if (rand() & 1) swap(a, b);
+	if (a != b) p[a] = b;
+}
+
+void cruscal(vvi & d, vvpi & g)
+{
+	int n = (int)d.size();
+	g.resize(n);
+
+	vector<pii2> v;
+	forn(i, n) forn(j, n) if (d[i][j] < INF)
+		v.pb(mp(d[i][j], mp(i, j)));
+	sort(v.begin(), v.end(), cmp1);
+
+	vector<int> p(n, -1);
+	forn(i, n) p[i] = i;
+
+	forn(i, (int)v.size())
+	{
+		int w = v[i].first, a = v[i].second.first, b = v[i].second.second;
+		if (dsu_get(p, a) != dsu_get(p, b))
+		{
+			dsu_unite(p, a, b);
+			g[a].pb(mp(b, w));
+			g[b].pb(mp(a, w));
+		}
+	}
+}
+
+bool cmp2(pii a, pii b)
+{
+	return a.first < b.first;
+}
+
+bool operator == (pii a, pii b)
+{
+	return a.first == b.first && a.second == b.second;
+}
+
+bool equal(vvpi a, vvpi b)
+{
+	int n = (int)a.size();
+	int m = (int)b.size();
+	if (n != m) return false;
+	forn(i, n)
+	{
+		if ((int)a[i].size() != (int)b[i].size()) return false;
+		sort(a[i].begin(), a[i].end(),cmp2);
+		sort(b[i].begin(), b[i].end(),cmp2);
+		forn(j, (int)a[i].size()) if (a[i][j] != b[i][j]) return false;
+	}
+	return true;
+}
+
+void TESTING()
+{
+	
+	int NUMBER_OF_TESTS = 30;
+	forn(i, NUMBER_OF_TESTS) {
+		int n;
+		vvpi graph;
+		make_random_tree(n, graph);
+		vvi d;
+		floyd(graph, d);
+		vvpi graph2;
+		cruscal(d, graph2);
+		cout << "TEST # " << i + 1 << "\nRESULT: ";
+		if (equal(graph, graph2)) cout << "OK\n";
+		else
+		{
+			cout << "WA\n\nProgram is incorrect.";
+			exit(0);
+		} 
+
+	}
+	cout << "\n\nProgram is correct.";
+}
+
+int main()
+{
+	//freopen("input.txt","r",stdin);
+	//freopen("output.txt", "w", stdout);
+
+	TESTING();
+}
